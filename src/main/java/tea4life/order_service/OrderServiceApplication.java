@@ -14,7 +14,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 @EnableMethodSecurity
 public class OrderServiceApplication {
 
-    // Trigger Deploy
     public static void main(String[] args) {
         SpringApplication.run(OrderServiceApplication.class, args);
     }
