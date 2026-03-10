@@ -1,0 +1,48 @@
+package tea4life.order_service.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import tea4life.order_service.config.database.SnowflakeGenerated;
+import tea4life.order_service.model.base.BaseEntity;
+import tea4life.order_service.model.constant.OrderStatus;
+
+import java.math.BigDecimal;
+import java.util.Set;
+
+/**
+ * @author Le Tran Gia Huy
+ * @created 10/03/2026 - 10:05 PM
+ * @project Tea4Life-Product-Service
+ * @package tea4life.order_service.model.base
+ */
+
+@Entity
+@Table(name = "orders")
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class Order extends BaseEntity {
+    @Id
+    @SnowflakeGenerated
+    Long id;
+
+    @Enumerated(EnumType.STRING)
+    OrderStatus status;
+    @Column(nullable = false, name = "user_id")
+    Long userId;
+    String note;
+    @Column(nullable = false, name = "price_before_discount")
+    BigDecimal priceBeforeDiscount;
+    @Column(nullable = false, name = "final_price")
+    BigDecimal finalPrice;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    Set<VoucherOrder> voucherOrders;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    Set<OrderItem> orderItems;
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    Payment payment;
+}
