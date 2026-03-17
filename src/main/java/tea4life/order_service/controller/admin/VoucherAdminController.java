@@ -60,6 +60,37 @@ public class VoucherAdminController {
         }
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<?>> updateVouchers(
+            @PathVariable Long id,
+            @RequestParam(value = "discountPercentage") double discountPercentage,
+            @RequestParam(value = "minOrderAmount") BigDecimal minOrderAmount,
+            @RequestParam(value = "maxDiscountAmount") BigDecimal maxDiscountAmount,
+            @RequestParam(value = "description") String description,
+            @RequestParam(value = "imgUrl") String imgUrl
+    ) {
+        try {
+            Voucher existingVoucher = voucherService.findVouchersById(id);
+            if (existingVoucher == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(null, null, "Không tìm thấy Voucher với ID: " + id));
+            }
+            existingVoucher.setDiscountPercentage(discountPercentage);
+            existingVoucher.setMinOrderAmount(minOrderAmount);
+            existingVoucher.setMaxDiscountAmount(maxDiscountAmount);
+            existingVoucher.setDescription(description);
+            existingVoucher.setImgUrl(imgUrl);
+            Voucher updatedVoucher = voucherService.saveVoucher(existingVoucher);
+            return ResponseEntity.ok(new ApiResponse<>(updatedVoucher));
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ApiResponse<>(null, null, "Lỗi dữ liệu: Vi phạm ràng buộc hoặc dữ liệu đã tồn tại."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null, null, "Lỗi server: Không thể cập nhật Voucher lúc này."));
+        }
+    }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> deleteVouchersById(@PathVariable Long id) {
