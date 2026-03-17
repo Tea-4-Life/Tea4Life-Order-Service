@@ -34,6 +34,8 @@ public class Voucher {
     @Column(nullable = false, name = "max_discount_amount")
     BigDecimal maxDiscountAmount;
     String description;
+    @Column(nullable = false, name = "img_url")
+    String imgUrl;
 
     @OneToMany(mappedBy = "voucher")
     Set<VoucherOrder> voucherOrders;
