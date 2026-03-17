@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import tea4life.order_service.model.Voucher;
 import tea4life.order_service.repository.VoucherRepository;
+import tea4life.order_service.service.VoucherService;
 
 import java.util.List;
 
@@ -20,9 +21,10 @@ import java.util.List;
  * @package tea4life.order_service.service.impl
  */
 
+@Service
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class VoucherServiceImpl {
+public class VoucherServiceImpl implements VoucherService {
     final VoucherRepository voucherRepository;
 
     public List<Voucher> findAllVouchers() {
