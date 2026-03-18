@@ -13,6 +13,7 @@ import java.math.BigDecimal;
  * @package tea4life.order_service.dto.request
  */
 public record CreateVoucherRequest(
+        String id,
         @Min(0)
         double discountPercentage,
         @NotNull(message = "minOrderAmount have to be a double-type number")
@@ -23,6 +24,5 @@ public record CreateVoucherRequest(
         String description,
         @NotBlank(message = "imgKey can't be null or empty")
         String imgKey
-
 ) {
 }

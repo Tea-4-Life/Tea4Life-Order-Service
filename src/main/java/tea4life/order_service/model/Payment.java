@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import tea4life.order_service.config.database.SnowflakeGenerated;
+import tea4life.order_service.model.base.BaseEntity;
 import tea4life.order_service.model.constant.PaymentStatus;
 
 import java.math.BigDecimal;
@@ -23,7 +24,7 @@ import java.util.Set;
 @Getter
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Payment {
+public class Payment extends BaseEntity {
     @SnowflakeGenerated
     @Id
     Long id;

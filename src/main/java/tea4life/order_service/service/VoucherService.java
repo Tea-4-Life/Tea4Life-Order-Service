@@ -20,7 +20,6 @@ public interface VoucherService {
     VoucherResponse findVoucherById(Long id);
 
     VoucherResponse saveVoucher(
-            Long id,
             CreateVoucherRequest request
     );
 

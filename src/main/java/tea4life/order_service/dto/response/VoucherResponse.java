@@ -8,10 +8,10 @@ package tea4life.order_service.dto.response;
  */
 public record VoucherResponse(
         String id,
-        String discountPercentage,
+        double discountPercentage,
         String minOrderAmount,
         String maxDiscountAmount,
         String description,
-        String imageUrl
+        String imgUrl
 ) {
 }

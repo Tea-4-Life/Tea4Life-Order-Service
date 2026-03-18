@@ -55,14 +55,22 @@ public class VoucherServiceImpl implements VoucherService {
     }
 
     public VoucherResponse saveVoucher(
-            Long id,
             CreateVoucherRequest request
     ) {
         Voucher voucher;
         String oldImageUrl = null;
+        Long id = null;
+        if (hasText(request.id())) {
+            try {
+                id = Long.parseLong(request.id());
+            } catch (NumberFormatException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Định dạng ID không hợp lệ: " + request.id());
+            }
+        }
         if(id != null) {
-            voucher = voucherRepository.findById(id)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy Voucher với ID: " + id));
+            Long finalId = id;
+            voucher = voucherRepository.findById(finalId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy Voucher với ID: " + finalId));
             oldImageUrl = voucher.getImgUrl();
         }else {
             voucher = new Voucher();
@@ -96,7 +104,7 @@ public class VoucherServiceImpl implements VoucherService {
     private VoucherResponse toVoucherResponse(Voucher voucher) {
         return new VoucherResponse(
                 voucher.getId().toString(),
-                String.valueOf(voucher.getDiscountPercentage()),
+                voucher.getDiscountPercentage(),
                 voucher.getMinOrderAmount().toString(),
                 voucher.getMaxDiscountAmount().toString(),
                 voucher.getDescription(),

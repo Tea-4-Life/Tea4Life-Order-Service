@@ -36,7 +36,6 @@ public class VoucherAdminController {
     ) {
         try {
             VoucherResponse savedVoucher = voucherService.saveVoucher(
-                    null,
                     request
             );
             return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(savedVoucher));
@@ -58,7 +57,6 @@ public class VoucherAdminController {
     ) {
         try {
             VoucherResponse updatedVoucher = voucherService.saveVoucher(
-                    id,
                     request
             );
             return ResponseEntity.ok(new ApiResponse<>(updatedVoucher));
