@@ -1,7 +1,8 @@
 package tea4life.order_service.service;
 
 import org.springframework.stereotype.Service;
-import tea4life.order_service.model.Voucher;
+import tea4life.order_service.dto.request.CreateVoucherRequest;
+import tea4life.order_service.dto.response.VoucherResponse;
 
 import java.util.List;
 
@@ -14,11 +15,14 @@ import java.util.List;
 
 @Service
 public interface VoucherService {
-    List<Voucher> findAllVouchers();
+    List<VoucherResponse> findAllVouchers();
 
-    Voucher findVouchersById(Long id);
+    VoucherResponse findVoucherById(Long id);
 
-    Voucher saveVoucher(Voucher voucher);
+    VoucherResponse saveVoucher(
+            Long id,
+            CreateVoucherRequest request
+    );
 
     void deleteVoucherById(Long id);
 }

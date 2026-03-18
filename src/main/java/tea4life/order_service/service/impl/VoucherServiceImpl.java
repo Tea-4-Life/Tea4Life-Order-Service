@@ -1,13 +1,19 @@
 package tea4life.order_service.service.impl;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import tea4life.order_service.client.StorageClient;
+import tea4life.order_service.dto.base.ApiResponse;
+import tea4life.order_service.dto.request.CreateVoucherRequest;
+import tea4life.order_service.dto.request.FileMoveRequest;
+import tea4life.order_service.dto.response.VoucherResponse;
 import tea4life.order_service.model.Voucher;
 import tea4life.order_service.repository.VoucherRepository;
 import tea4life.order_service.service.VoucherService;
@@ -22,31 +28,97 @@ import java.util.List;
  */
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Transactional
 public class VoucherServiceImpl implements VoucherService {
-    final VoucherRepository voucherRepository;
+    VoucherRepository voucherRepository;
+    StorageClient storageClient;
+    KafkaTemplate<String, String> kafkaTemplate;
 
-    public List<Voucher> findAllVouchers() {
-        return voucherRepository.findAll();
+    @Value("${spring.kafka.topic.storage-delete-file}")
+    @NonFinal
+    String storageDeleteFileTopic;
+
+    public List<VoucherResponse> findAllVouchers() {
+        return voucherRepository.findAll().stream().map(this::toVoucherResponse).toList();
     }
 
-    public Voucher findVouchersById(Long id) {
-        Voucher voucher = voucherRepository.findById(id)
+    public VoucherResponse findVoucherById(Long id) {
+        return voucherRepository.findById(id).map(this::toVoucherResponse)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy Voucher với ID: " + id));
-        return voucher;
     }
 
-    public Voucher saveVoucher(Voucher voucher) {
-        return voucherRepository.save(voucher);
+    public Voucher findVoucherByIdWithoutMapping(Long id) {
+        return voucherRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy Voucher với ID: " + id));
+    }
+
+    public VoucherResponse saveVoucher(
+            Long id,
+            CreateVoucherRequest request
+    ) {
+        Voucher voucher;
+        String oldImageUrl = null;
+        if(id != null) {
+            voucher = voucherRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy Voucher với ID: " + id));
+            oldImageUrl = voucher.getImgUrl();
+        }else {
+            voucher = new Voucher();
+        }
+        applyRequestBodyToVoucher(voucher, request);
+        if (voucher.getId() == null) {
+            voucher = voucherRepository.save(voucher);
+        }
+        if (hasText(request.imgKey()) && !request.imgKey().equals(oldImageUrl)) {
+            String destinationPath = "vouchers/items/" + voucher.getId();
+            ApiResponse<String> storageResponse = storageClient.confirmFile(new FileMoveRequest(request.imgKey(), destinationPath));
+            if (storageResponse.getErrorCode() != null) {
+                throw new RuntimeException("Loi di chuyen file: " + storageResponse.getErrorMessage());
+            }
+            voucher.setImgUrl(storageResponse.getData());
+        }
+        voucher = voucherRepository.save(voucher);
+        if (hasText(request.imgKey()) && oldImageUrl != null && !oldImageUrl.equals(voucher.getImgUrl())) {
+            publishStorageDelete(oldImageUrl);
+        }
+        return toVoucherResponse(voucher);
     }
 
     public void deleteVoucherById(Long id) {
-        if (!voucherRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy Voucher với ID: " + id);
-        }
+        Voucher voucher = findVoucherByIdWithoutMapping(id);
+        String imgUrl = voucher.getImgUrl();
         voucherRepository.deleteById(id);
+        publishStorageDelete(imgUrl);
     }
 
+    private VoucherResponse toVoucherResponse(Voucher voucher) {
+        return new VoucherResponse(
+                voucher.getId().toString(),
+                String.valueOf(voucher.getDiscountPercentage()),
+                voucher.getMinOrderAmount().toString(),
+                voucher.getMaxDiscountAmount().toString(),
+                voucher.getDescription(),
+                voucher.getImgUrl()
+        );
+    }
 
+    private void applyRequestBodyToVoucher(Voucher voucher, CreateVoucherRequest request) {
+        voucher.setDiscountPercentage(request.discountPercentage());
+        voucher.setMinOrderAmount(request.minOrderAmount());
+        voucher.setMaxDiscountAmount(request.maxDiscountAmount());
+        voucher.setDescription(request.description());
+        voucher.setImgUrl(request.imgKey());
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    private void publishStorageDelete(String fileUrl) {
+        if (hasText(fileUrl)) {
+            kafkaTemplate.send(storageDeleteFileTopic, fileUrl);
+        }
+    }
 }

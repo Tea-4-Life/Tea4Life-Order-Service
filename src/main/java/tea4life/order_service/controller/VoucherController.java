@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tea4life.order_service.dto.base.ApiResponse;
+import tea4life.order_service.dto.response.VoucherResponse;
 import tea4life.order_service.model.Voucher;
 import tea4life.order_service.service.VoucherService;
 
@@ -30,12 +31,12 @@ public class VoucherController {
     final VoucherService voucherService;
 
     @GetMapping()
-    public ResponseEntity<ApiResponse<List<Voucher>>> findAllVouchers() {
+    public ResponseEntity<ApiResponse<List<VoucherResponse>>> findAllVouchers() {
         return ResponseEntity.ok(new ApiResponse<>(voucherService.findAllVouchers()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Voucher>> findVouchersById(@PathVariable Long id) {
-        return ResponseEntity.ok(new ApiResponse<>(voucherService.findVouchersById(id)));
+    public ResponseEntity<ApiResponse<VoucherResponse>> findVouchersById(@PathVariable Long id) {
+        return ResponseEntity.ok(new ApiResponse<>(voucherService.findVoucherById(id)));
     }
 }
