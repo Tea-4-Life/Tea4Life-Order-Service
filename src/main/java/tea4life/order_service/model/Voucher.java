@@ -3,6 +3,8 @@ package tea4life.order_service.model;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import tea4life.order_service.config.database.SnowflakeGenerated;
 import tea4life.order_service.model.base.BaseEntity;
 
@@ -18,6 +20,8 @@ import java.util.Set;
 
 @Entity
 @Table(name = "vouchers")
+@SQLDelete(sql = "UPDATE vouchers SET is_deleted = 1 WHERE id = ?")
+@SQLRestriction("is_deleted = 0")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -37,6 +41,8 @@ public class Voucher extends BaseEntity {
     String description;
     @Column(nullable = false, name = "img_url")
     String imgUrl;
+    @Column(nullable = false, name="is_deleted")
+    boolean isDeleted = false;
 
     @OneToMany(mappedBy = "voucher")
     Set<VoucherOrder> voucherOrders;

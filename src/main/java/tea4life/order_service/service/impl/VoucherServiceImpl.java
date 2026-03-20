@@ -96,9 +96,9 @@ public class VoucherServiceImpl implements VoucherService {
 
     public void deleteVoucherById(Long id) {
         Voucher voucher = findVoucherByIdWithoutMapping(id);
-        String imgUrl = voucher.getImgUrl();
+//        String imgUrl = voucher.getImgUrl();
         voucherRepository.deleteById(id);
-        publishStorageDelete(imgUrl);
+//        publishStorageDelete(imgUrl);
     }
 
     private VoucherResponse toVoucherResponse(Voucher voucher) {

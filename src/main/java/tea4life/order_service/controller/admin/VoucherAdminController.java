@@ -15,6 +15,8 @@ import tea4life.order_service.dto.request.CreateVoucherRequest;
 import tea4life.order_service.dto.response.VoucherResponse;
 import tea4life.order_service.service.VoucherService;
 
+import java.util.List;
+
 /**
  * @author Le Tran Gia Huy
  * @created 17/03/2026 - 11:03 PM
@@ -29,6 +31,16 @@ import tea4life.order_service.service.VoucherService;
 public class VoucherAdminController {
 
     final VoucherService voucherService;
+
+    @GetMapping()
+    public ResponseEntity<ApiResponse<List<VoucherResponse>>> findAllVouchers() {
+        return ResponseEntity.ok(new ApiResponse<>(voucherService.findAllVouchers()));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<VoucherResponse>> findVouchersById(@PathVariable Long id) {
+        return ResponseEntity.ok(new ApiResponse<>(voucherService.findVoucherById(id)));
+    }
 
     @PostMapping()
     public ResponseEntity<ApiResponse<VoucherResponse>> insertVouchers(
@@ -52,7 +64,6 @@ public class VoucherAdminController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<VoucherResponse>> updateVouchers(
-            @PathVariable Long id,
             @RequestBody @Valid CreateVoucherRequest request
     ) {
         try {

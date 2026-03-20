@@ -34,9 +34,4 @@ public class VoucherController {
     public ResponseEntity<ApiResponse<List<VoucherResponse>>> findAllVouchers() {
         return ResponseEntity.ok(new ApiResponse<>(voucherService.findAllVouchers()));
     }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<VoucherResponse>> findVouchersById(@PathVariable Long id) {
-        return ResponseEntity.ok(new ApiResponse<>(voucherService.findVoucherById(id)));
-    }
 }
