@@ -8,15 +8,15 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tea4life.order_service.dto.base.ApiResponse;
-import tea4life.order_service.dto.request.AddCartItemRequest;
-import tea4life.order_service.dto.request.UpdateCartItemRequest;
-import tea4life.order_service.dto.response.CartResponse;
+import tea4life.order_service.dto.request.cart.AddCartItemRequest;
+import tea4life.order_service.dto.request.cart.UpdateCartItemRequest;
+import tea4life.order_service.dto.response.cart.CartResponse;
 import tea4life.order_service.service.CartService;
 
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@RequestMapping("/public/cart")
+@RequestMapping("/cart")
 public class CartController {
 
     CartService cartService;

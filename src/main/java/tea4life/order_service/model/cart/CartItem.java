@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -47,8 +48,9 @@ public class CartItem extends BaseEntity {
     @Column(name = "product_image_url", length = 500)
     String productImageUrl;
 
-    @Column(name = "product_variant", length = 255)
-    String productVariant;
+    @Lob
+    @Column(name = "selected_options_snapshot", columnDefinition = "LONGTEXT")
+    String selectedOptionsSnapshot;
 
     @Column(nullable = false, name = "unit_price")
     BigDecimal unitPrice;

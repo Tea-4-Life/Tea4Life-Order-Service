@@ -1,4 +1,4 @@
-package tea4life.order_service.dto.request;
+package tea4life.order_service.dto.request.cart;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

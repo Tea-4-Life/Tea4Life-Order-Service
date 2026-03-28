@@ -1,4 +1,4 @@
-package tea4life.order_service.dto.request;
+package tea4life.order_service.dto.request.cart;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record AddCartItemRequest(
         @NotNull(message = "productId can't be null")
@@ -13,7 +14,7 @@ public record AddCartItemRequest(
         @NotBlank(message = "productName can't be null or empty")
         String productName,
         String productImageUrl,
-        String productVariant,
+        List<CartItemOptionSelectionRequest> selectedOptions,
         @NotNull(message = "unitPrice can't be null")
         @DecimalMin(value = "0.0", inclusive = false, message = "unitPrice must be greater than 0")
         BigDecimal unitPrice,

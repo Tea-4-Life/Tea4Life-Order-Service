@@ -1,4 +1,4 @@
-package tea4life.order_service.dto.response;
+package tea4life.order_service.dto.response.cart;
 
 import java.math.BigDecimal;
 import java.util.List;

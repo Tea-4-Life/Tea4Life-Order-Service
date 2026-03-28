@@ -1,5 +1,8 @@
 package tea4life.order_service.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -8,10 +11,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import tea4life.order_service.context.UserContext;
-import tea4life.order_service.dto.request.AddCartItemRequest;
-import tea4life.order_service.dto.request.UpdateCartItemRequest;
-import tea4life.order_service.dto.response.CartItemResponse;
-import tea4life.order_service.dto.response.CartResponse;
+import tea4life.order_service.dto.request.cart.AddCartItemRequest;
+import tea4life.order_service.dto.request.cart.CartItemOptionSelectionRequest;
+import tea4life.order_service.dto.request.cart.UpdateCartItemRequest;
+import tea4life.order_service.dto.response.cart.CartItemOptionSelectionResponse;
+import tea4life.order_service.dto.response.cart.CartItemResponse;
+import tea4life.order_service.dto.response.cart.CartResponse;
 import tea4life.order_service.model.cart.Cart;
 import tea4life.order_service.model.cart.CartItem;
 import tea4life.order_service.repository.CartItemRepository;
@@ -31,6 +36,7 @@ public class CartServiceImpl implements CartService {
 
     CartRepository cartRepository;
     CartItemRepository cartItemRepository;
+    ObjectMapper objectMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -100,7 +106,7 @@ public class CartServiceImpl implements CartService {
         cartItem.setProductId(request.productId());
         cartItem.setProductName(request.productName().trim());
         cartItem.setProductImageUrl(trimToNull(request.productImageUrl()));
-        cartItem.setProductVariant(trimToNull(request.productVariant()));
+        cartItem.setSelectedOptionsSnapshot(toSelectedOptionsSnapshot(request.selectedOptions()));
         cartItem.setUnitPrice(request.unitPrice());
         cartItem.setQuantity(request.quantity());
         cartItem.setSubTotal(request.unitPrice().multiply(BigDecimal.valueOf(request.quantity())));
@@ -138,7 +144,7 @@ public class CartServiceImpl implements CartService {
                 cartItem.getProductId(),
                 cartItem.getProductName(),
                 cartItem.getProductImageUrl(),
-                cartItem.getProductVariant(),
+                fromSelectedOptionsSnapshot(cartItem.getSelectedOptionsSnapshot()),
                 cartItem.getUnitPrice(),
                 cartItem.getQuantity(),
                 cartItem.getSubTotal()
@@ -159,5 +165,30 @@ public class CartServiceImpl implements CartService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String toSelectedOptionsSnapshot(List<CartItemOptionSelectionRequest> selectedOptions) {
+        if (selectedOptions == null || selectedOptions.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return objectMapper.writeValueAsString(selectedOptions);
+        } catch (JsonProcessingException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "selectedOptions không hợp lệ", ex);
+        }
+    }
+
+    private List<CartItemOptionSelectionResponse> fromSelectedOptionsSnapshot(String snapshot) {
+        if (snapshot == null || snapshot.isBlank()) {
+            return List.of();
+        }
+
+        try {
+            return objectMapper.readValue(snapshot, new TypeReference<List<CartItemOptionSelectionResponse>>() {
+            });
+        } catch (JsonProcessingException ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Không đọc được selectedOptions snapshot", ex);
+        }
     }
 }
