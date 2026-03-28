@@ -5,7 +5,7 @@ import java.util.List;
 
 public record CartItemResponse(
         String id,
-        Long productId,
+        String productId,
         String productName,
         String productImageUrl,
         List<CartItemOptionSelectionResponse> selectedOptions,

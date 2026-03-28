@@ -9,8 +9,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record AddCartItemRequest(
-        @NotNull(message = "productId can't be null")
-        Long productId,
+        @NotBlank(message = "productId can't be null or empty")
+        String productId,
         @NotBlank(message = "productName can't be null or empty")
         String productName,
         String productImageUrl,

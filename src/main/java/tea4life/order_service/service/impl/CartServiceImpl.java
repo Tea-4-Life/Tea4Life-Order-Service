@@ -103,7 +103,7 @@ public class CartServiceImpl implements CartService {
     }
 
     private void applyAddRequestToCartItem(CartItem cartItem, AddCartItemRequest request) {
-        cartItem.setProductId(request.productId());
+        cartItem.setProductId(parseProductId(request.productId()));
         cartItem.setProductName(request.productName().trim());
         cartItem.setProductImageUrl(trimToNull(request.productImageUrl()));
         cartItem.setSelectedOptionsSnapshot(toSelectedOptionsSnapshot(request.selectedOptions()));
@@ -141,7 +141,7 @@ public class CartServiceImpl implements CartService {
     private CartItemResponse toCartItemResponse(CartItem cartItem) {
         return new CartItemResponse(
                 cartItem.getId() == null ? null : cartItem.getId().toString(),
-                cartItem.getProductId(),
+                cartItem.getProductId() == null ? null : cartItem.getProductId().toString(),
                 cartItem.getProductName(),
                 cartItem.getProductImageUrl(),
                 fromSelectedOptionsSnapshot(cartItem.getSelectedOptionsSnapshot()),
@@ -165,6 +165,14 @@ public class CartServiceImpl implements CartService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private Long parseProductId(String productId) {
+        try {
+            return Long.parseLong(productId.trim());
+        } catch (NumberFormatException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "productId không hợp lệ", ex);
+        }
     }
 
     private String toSelectedOptionsSnapshot(List<CartItemOptionSelectionRequest> selectedOptions) {
