@@ -17,6 +17,7 @@ import tea4life.order_service.dto.request.cart.UpdateCartItemRequest;
 import tea4life.order_service.dto.response.cart.CartItemOptionSelectionResponse;
 import tea4life.order_service.dto.response.cart.CartItemResponse;
 import tea4life.order_service.dto.response.cart.CartResponse;
+import tea4life.order_service.dto.response.cart.RecentCartItemsResponse;
 import tea4life.order_service.model.cart.Cart;
 import tea4life.order_service.model.cart.CartItem;
 import tea4life.order_service.repository.CartItemRepository;
@@ -43,6 +44,24 @@ public class CartServiceImpl implements CartService {
     public CartResponse getMyCart() {
         Cart cart = getOrCreateCart(resolveCurrentKeycloakId());
         return toCartResponse(cart);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RecentCartItemsResponse getMyRecentCartItems() {
+        Cart cart = getOrCreateCart(resolveCurrentKeycloakId());
+        List<CartItem> cartItems = getSortedCartItems(cart);
+
+        List<CartItemResponse> recentItems = cartItems.stream()
+                .limit(3)
+                .map(this::toCartItemResponse)
+                .toList();
+
+        int totalItems = cartItems.stream()
+                .map(CartItem::getQuantity)
+                .reduce(0, Integer::sum);
+
+        return new RecentCartItemsResponse(recentItems, totalItems);
     }
 
     @Override
@@ -113,11 +132,7 @@ public class CartServiceImpl implements CartService {
     }
 
     private CartResponse toCartResponse(Cart cart) {
-        List<CartItemResponse> itemResponses = cart.getCartItems() == null
-                ? List.of()
-                : cart.getCartItems().stream()
-                .sorted(Comparator.comparing(CartItem::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
-                        .thenComparing(CartItem::getId, Comparator.nullsLast(Long::compareTo)))
+        List<CartItemResponse> itemResponses = getSortedCartItems(cart).stream()
                 .map(this::toCartItemResponse)
                 .toList();
 
@@ -136,6 +151,15 @@ public class CartServiceImpl implements CartService {
                 totalItems,
                 totalAmount
         );
+    }
+
+    private List<CartItem> getSortedCartItems(Cart cart) {
+        return cart.getCartItems() == null
+                ? List.of()
+                : cart.getCartItems().stream()
+                .sorted(Comparator.comparing(CartItem::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(CartItem::getId, Comparator.nullsLast(Long::compareTo)).reversed())
+                .toList();
     }
 
     private CartItemResponse toCartItemResponse(CartItem cartItem) {

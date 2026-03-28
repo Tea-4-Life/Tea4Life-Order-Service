@@ -11,6 +11,7 @@ import tea4life.order_service.dto.base.ApiResponse;
 import tea4life.order_service.dto.request.cart.AddCartItemRequest;
 import tea4life.order_service.dto.request.cart.UpdateCartItemRequest;
 import tea4life.order_service.dto.response.cart.CartResponse;
+import tea4life.order_service.dto.response.cart.RecentCartItemsResponse;
 import tea4life.order_service.service.CartService;
 
 @RestController
@@ -24,6 +25,11 @@ public class CartController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<CartResponse>> getMyCart() {
         return ResponseEntity.ok(new ApiResponse<>(cartService.getMyCart()));
+    }
+
+    @GetMapping("/me/items/recent")
+    public ResponseEntity<ApiResponse<RecentCartItemsResponse>> getMyRecentCartItems() {
+        return ResponseEntity.ok(new ApiResponse<>(cartService.getMyRecentCartItems()));
     }
 
     @PostMapping("/me/items")
