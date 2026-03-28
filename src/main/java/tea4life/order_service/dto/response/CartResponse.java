@@ -5,7 +5,7 @@ import java.util.List;
 
 public record CartResponse(
         String id,
-        Long userId,
+        String keycloakId,
         List<CartItemResponse> items,
         Integer totalItems,
         BigDecimal totalAmount

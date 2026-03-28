@@ -35,7 +35,7 @@ public class Payment extends BaseEntity {
     Long id;
 
     @Column(name = "user_id", nullable = false)
-    Long userId;
+    String keycloakId;
     BigDecimal amount;
     @Enumerated(EnumType.STRING)
     PaymentStatus status;

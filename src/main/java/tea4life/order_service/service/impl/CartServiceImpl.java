@@ -35,13 +35,13 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional(readOnly = true)
     public CartResponse getMyCart() {
-        Cart cart = getOrCreateCart(resolveCurrentUserId());
+        Cart cart = getOrCreateCart(resolveCurrentKeycloakId());
         return toCartResponse(cart);
     }
 
     @Override
     public CartResponse addItemToMyCart(AddCartItemRequest request) {
-        Cart cart = getOrCreateCart(resolveCurrentUserId());
+        Cart cart = getOrCreateCart(resolveCurrentKeycloakId());
 
         CartItem cartItem = new CartItem();
         cartItem.setCart(cart);
@@ -53,7 +53,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponse updateMyCartItem(Long cartItemId, UpdateCartItemRequest request) {
-        Cart cart = getOrCreateCart(resolveCurrentUserId());
+        Cart cart = getOrCreateCart(resolveCurrentKeycloakId());
         CartItem cartItem = findCartItem(cart.getId(), cartItemId);
 
         cartItem.setQuantity(request.quantity());
@@ -65,28 +65,28 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public void removeMyCartItem(Long cartItemId) {
-        Cart cart = getOrCreateCart(resolveCurrentUserId());
+        Cart cart = getOrCreateCart(resolveCurrentKeycloakId());
         CartItem cartItem = findCartItem(cart.getId(), cartItemId);
         cartItemRepository.delete(cartItem);
     }
 
     @Override
     public void clearMyCart() {
-        Cart cart = getOrCreateCart(resolveCurrentUserId());
+        Cart cart = getOrCreateCart(resolveCurrentKeycloakId());
         if (cart.getCartItems() != null) {
             cart.getCartItems().clear();
         }
         cartRepository.save(cart);
     }
 
-    private Cart getOrCreateCart(Long userId) {
-        return cartRepository.findByUserId(userId)
-                .orElseGet(() -> cartRepository.save(buildEmptyCart(userId)));
+    private Cart getOrCreateCart(String keycloakId) {
+        return cartRepository.findByKeycloakId(keycloakId)
+                .orElseGet(() -> cartRepository.save(buildEmptyCart(keycloakId)));
     }
 
-    private Cart buildEmptyCart(Long userId) {
+    private Cart buildEmptyCart(String keycloakId) {
         Cart cart = new Cart();
-        cart.setUserId(userId);
+        cart.setKeycloakId(keycloakId);
         cart.setCartItems(new LinkedHashSet<>());
         return cart;
     }
@@ -125,7 +125,7 @@ public class CartServiceImpl implements CartService {
 
         return new CartResponse(
                 cart.getId() == null ? null : cart.getId().toString(),
-                cart.getUserId(),
+                cart.getKeycloakId(),
                 itemResponses,
                 totalItems,
                 totalAmount
@@ -145,17 +145,12 @@ public class CartServiceImpl implements CartService {
         );
     }
 
-    private Long resolveCurrentUserId() {
+    private String resolveCurrentKeycloakId() {
         UserContext context = UserContext.get();
         if (context == null || context.getKeycloakId() == null || context.getKeycloakId().isBlank()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không xác định được người dùng hiện tại");
         }
-
-        try {
-            return Long.parseLong(context.getKeycloakId().trim());
-        } catch (NumberFormatException ex) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "X-User-KeycloakId không phải user id hợp lệ", ex);
-        }
+        return context.getKeycloakId().trim();
     }
 
     private String trimToNull(String value) {

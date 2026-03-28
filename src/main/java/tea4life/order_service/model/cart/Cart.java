@@ -28,7 +28,7 @@ public class Cart extends BaseEntity {
     Long id;
 
     @Column(unique = true, nullable = false, name = "user_id")
-    Long userId;
+    String keycloakId;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     Set<CartItem> cartItems;

@@ -38,7 +38,7 @@ public class Order extends BaseEntity {
     @Enumerated(EnumType.STRING)
     OrderStatus status;
     @Column(nullable = false, name = "user_id")
-    Long userId;
+    String keycloakId;
     String note;
     @Column(nullable = false, name = "price_before_discount")
     BigDecimal priceBeforeDiscount;
