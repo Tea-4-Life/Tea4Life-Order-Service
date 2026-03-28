@@ -1,4 +1,4 @@
-package tea4life.order_service.model;
+package tea4life.order_service.model.voucher;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -7,6 +7,7 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import tea4life.order_service.config.database.SnowflakeGenerated;
 import tea4life.order_service.model.base.BaseEntity;
+import tea4life.order_service.model.order.Order;
 
 import java.math.BigDecimal;
 
@@ -33,7 +34,7 @@ public class VoucherOrder extends BaseEntity {
 
     @Column(name = "discount_amount", nullable = false)
     BigDecimal discountAmount;
-    @Column(nullable = false, name="is_deleted")
+    @Column(nullable = false, name = "is_deleted")
     boolean isDeleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY)

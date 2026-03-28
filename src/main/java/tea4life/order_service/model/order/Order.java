@@ -1,4 +1,4 @@
-package tea4life.order_service.model;
+package tea4life.order_service.model.order;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,8 +6,10 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import tea4life.order_service.config.database.SnowflakeGenerated;
+import tea4life.order_service.model.voucher.VoucherOrder;
 import tea4life.order_service.model.base.BaseEntity;
 import tea4life.order_service.model.constant.OrderStatus;
+import tea4life.order_service.model.payment.Payment;
 
 import java.math.BigDecimal;
 import java.util.Set;
@@ -42,7 +44,7 @@ public class Order extends BaseEntity {
     BigDecimal priceBeforeDiscount;
     @Column(nullable = false, name = "final_price")
     BigDecimal finalPrice;
-    @Column(nullable = false, name="is_deleted")
+    @Column(nullable = false, name = "is_deleted")
     boolean isDeleted = false;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)

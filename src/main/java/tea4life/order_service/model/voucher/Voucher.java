@@ -1,4 +1,4 @@
-package tea4life.order_service.model;
+package tea4life.order_service.model.voucher;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -41,7 +41,7 @@ public class Voucher extends BaseEntity {
     String description;
     @Column(nullable = false, name = "img_url")
     String imgUrl;
-    @Column(nullable = false, name="is_deleted")
+    @Column(nullable = false, name = "is_deleted")
     boolean isDeleted = false;
 
     @OneToMany(mappedBy = "voucher")

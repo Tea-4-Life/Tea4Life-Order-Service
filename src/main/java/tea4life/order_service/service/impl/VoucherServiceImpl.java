@@ -14,7 +14,7 @@ import tea4life.order_service.dto.base.ApiResponse;
 import tea4life.order_service.dto.request.CreateVoucherRequest;
 import tea4life.order_service.dto.request.FileMoveRequest;
 import tea4life.order_service.dto.response.VoucherResponse;
-import tea4life.order_service.model.Voucher;
+import tea4life.order_service.model.voucher.Voucher;
 import tea4life.order_service.repository.VoucherRepository;
 import tea4life.order_service.service.VoucherService;
 
@@ -67,12 +67,12 @@ public class VoucherServiceImpl implements VoucherService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Định dạng ID không hợp lệ: " + request.id());
             }
         }
-        if(id != null) {
+        if (id != null) {
             Long finalId = id;
             voucher = voucherRepository.findById(finalId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy Voucher với ID: " + finalId));
             oldImageUrl = voucher.getImgUrl();
-        }else {
+        } else {
             voucher = new Voucher();
         }
         applyRequestBodyToVoucher(voucher, request);

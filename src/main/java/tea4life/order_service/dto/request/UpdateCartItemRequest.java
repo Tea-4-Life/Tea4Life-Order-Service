@@ -1,0 +1,11 @@
+package tea4life.order_service.dto.request;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+
+public record UpdateCartItemRequest(
+        @NotNull(message = "quantity can't be null")
+        @Min(value = 1, message = "quantity must be at least 1")
+        Integer quantity
+) {
+}

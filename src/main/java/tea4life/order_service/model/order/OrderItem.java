@@ -1,4 +1,4 @@
-package tea4life.order_service.model;
+package tea4life.order_service.model.order;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -38,7 +38,7 @@ public class OrderItem extends BaseEntity {
     BigDecimal unitPrice;
     @Column(name = "sub_total", nullable = false)
     BigDecimal subTotal;
-    @Column(nullable = false, name="is_deleted")
+    @Column(nullable = false, name = "is_deleted")
     boolean isDeleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY)

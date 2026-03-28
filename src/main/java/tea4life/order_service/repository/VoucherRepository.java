@@ -2,7 +2,7 @@ package tea4life.order_service.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import tea4life.order_service.model.Voucher;
+import tea4life.order_service.model.voucher.Voucher;
 
 import java.util.Optional;
 

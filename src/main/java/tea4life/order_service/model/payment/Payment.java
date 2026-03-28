@@ -1,4 +1,4 @@
-package tea4life.order_service.model;
+package tea4life.order_service.model.payment;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import tea4life.order_service.config.database.SnowflakeGenerated;
+import tea4life.order_service.model.order.Order;
 import tea4life.order_service.model.base.BaseEntity;
 import tea4life.order_service.model.constant.PaymentStatus;
 
@@ -38,7 +39,7 @@ public class Payment extends BaseEntity {
     BigDecimal amount;
     @Enumerated(EnumType.STRING)
     PaymentStatus status;
-    @Column(nullable = false, name="is_deleted")
+    @Column(nullable = false, name = "is_deleted")
     boolean isDeleted = false;
 
     @OneToOne(fetch = FetchType.LAZY)
