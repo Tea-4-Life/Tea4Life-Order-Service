@@ -20,6 +20,10 @@ public record CheckoutOrderRequest(
         @NotBlank(message = "detail không được để trống")
         String detail,
 
+        Double latitude,
+
+        Double longitude,
+
         @NotNull(message = "paymentMethod không được để trống")
         PaymentMethod paymentMethod,
 

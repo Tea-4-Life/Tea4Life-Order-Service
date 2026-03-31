@@ -53,7 +53,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponse createOrder(CreateOrderRequest request) {
         String currentKeycloakId = resolveCurrentKeycloakId();
-        Store assignedStore = resolveDefaultStore();
+        Store assignedStore = resolveAssignedStore(request.latitude(), request.longitude());
 
         return persistOrder(
                 currentKeycloakId,
@@ -81,7 +81,7 @@ public class OrderServiceImpl implements OrderService {
 
         OrderResponse response = persistOrder(
                 currentKeycloakId,
-                resolveDefaultStore(),
+                resolveAssignedStore(request.latitude(), request.longitude()),
                 request.receiverName(),
                 request.phone(),
                 request.province(),
@@ -290,6 +290,27 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Chưa có cửa hàng hoạt động để nhận đơn"));
     }
 
+    private Store resolveAssignedStore(Double latitude, Double longitude) {
+        List<Store> activeStores = storeRepository.findAll().stream()
+                .filter(store -> Boolean.TRUE.equals(store.getActive()))
+                .toList();
+
+        if (activeStores.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Chưa có cửa hàng hoạt động để nhận đơn");
+        }
+
+        if (latitude == null || longitude == null) {
+            return activeStores.get(0);
+        }
+
+        return activeStores.stream()
+                .min((left, right) -> Double.compare(
+                        calculateDistanceInKm(latitude, longitude, left.getLatitude(), left.getLongitude()),
+                        calculateDistanceInKm(latitude, longitude, right.getLatitude(), right.getLongitude())
+                ))
+                .orElse(activeStores.get(0));
+    }
+
     // =================================================
     // Utils
     // =================================================
@@ -312,5 +333,23 @@ public class OrderServiceImpl implements OrderService {
 
     private String buildOrderCode(Long orderId) {
         return "ORD-" + orderId;
+    }
+
+    private double calculateDistanceInKm(
+            double originLatitude,
+            double originLongitude,
+            double destinationLatitude,
+            double destinationLongitude
+    ) {
+        double earthRadiusKm = 6371.0;
+        double latitudeDistance = Math.toRadians(destinationLatitude - originLatitude);
+        double longitudeDistance = Math.toRadians(destinationLongitude - originLongitude);
+
+        double a = Math.sin(latitudeDistance / 2) * Math.sin(latitudeDistance / 2)
+                + Math.cos(Math.toRadians(originLatitude)) * Math.cos(Math.toRadians(destinationLatitude))
+                * Math.sin(longitudeDistance / 2) * Math.sin(longitudeDistance / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return earthRadiusKm * c;
     }
 }
