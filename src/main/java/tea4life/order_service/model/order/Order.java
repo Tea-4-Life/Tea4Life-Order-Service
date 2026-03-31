@@ -9,6 +9,8 @@ import tea4life.order_service.config.database.SnowflakeGenerated;
 import tea4life.order_service.model.voucher.VoucherOrder;
 import tea4life.order_service.model.base.BaseEntity;
 import tea4life.order_service.model.constant.OrderStatus;
+import tea4life.order_service.model.constant.PaymentMethod;
+import tea4life.order_service.model.constant.PaymentStatus;
 import tea4life.order_service.model.payment.Payment;
 import tea4life.order_service.model.store.Store;
 
@@ -36,6 +38,9 @@ public class Order extends BaseEntity {
     @SnowflakeGenerated
     Long id;
 
+    @Column(name = "order_code", unique = true)
+    String orderCode;
+
     @Enumerated(EnumType.STRING)
     OrderStatus status;
     @Column(nullable = false, name = "user_id")
@@ -43,6 +48,22 @@ public class Order extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
     Store store;
+    @Column(nullable = false, name = "receiver_name")
+    String receiverName;
+    @Column(nullable = false)
+    String phone;
+    @Column(nullable = false)
+    String province;
+    @Column(nullable = false)
+    String ward;
+    @Column(nullable = false)
+    String detail;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name = "payment_method")
+    PaymentMethod paymentMethod;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name = "payment_status")
+    PaymentStatus paymentStatus;
     String note;
     @Column(nullable = false, name = "price_before_discount")
     BigDecimal priceBeforeDiscount;

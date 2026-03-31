@@ -1,0 +1,316 @@
+package tea4life.order_service.service.impl;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import tea4life.order_service.context.UserContext;
+import tea4life.order_service.dto.request.order.CheckoutOrderRequest;
+import tea4life.order_service.dto.request.order.CreateOrderRequest;
+import tea4life.order_service.dto.request.order.OrderItemOptionRequest;
+import tea4life.order_service.dto.request.order.OrderItemRequest;
+import tea4life.order_service.dto.response.order.OrderItemOptionResponse;
+import tea4life.order_service.dto.response.order.OrderItemResponse;
+import tea4life.order_service.dto.response.order.OrderResponse;
+import tea4life.order_service.model.cart.Cart;
+import tea4life.order_service.model.cart.CartItem;
+import tea4life.order_service.model.constant.OrderStatus;
+import tea4life.order_service.model.constant.PaymentStatus;
+import tea4life.order_service.model.order.Order;
+import tea4life.order_service.model.order.OrderItem;
+import tea4life.order_service.model.payment.Payment;
+import tea4life.order_service.model.store.Store;
+import tea4life.order_service.repository.CartRepository;
+import tea4life.order_service.repository.OrderRepository;
+import tea4life.order_service.repository.StoreRepository;
+import tea4life.order_service.service.OrderService;
+
+import java.math.BigDecimal;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+@Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Transactional
+public class OrderServiceImpl implements OrderService {
+
+    // Repository
+    CartRepository cartRepository;
+    OrderRepository orderRepository;
+    StoreRepository storeRepository;
+
+    // Mapper / Serializer
+    ObjectMapper objectMapper;
+
+    @Override
+    public OrderResponse createOrder(CreateOrderRequest request) {
+        String currentKeycloakId = resolveCurrentKeycloakId();
+        Store assignedStore = resolveDefaultStore();
+
+        return persistOrder(
+                currentKeycloakId,
+                assignedStore,
+                request.receiverName(),
+                request.phone(),
+                request.province(),
+                request.ward(),
+                request.detail(),
+                request.paymentMethod(),
+                buildOrderItemsFromRequest(null, request.items())
+        );
+    }
+
+    @Override
+    public OrderResponse checkoutMyCart(CheckoutOrderRequest request) {
+        String currentKeycloakId = resolveCurrentKeycloakId();
+        Cart cart = cartRepository.findByKeycloakId(currentKeycloakId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy giỏ hàng hiện tại"));
+
+        List<CartItem> cartItems = cart.getCartItems() == null ? List.of() : cart.getCartItems().stream().toList();
+        if (cartItems.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Giỏ hàng đang trống");
+        }
+
+        OrderResponse response = persistOrder(
+                currentKeycloakId,
+                resolveDefaultStore(),
+                request.receiverName(),
+                request.phone(),
+                request.province(),
+                request.ward(),
+                request.detail(),
+                request.paymentMethod(),
+                buildOrderItemsFromCart(null, cartItems)
+        );
+
+        cart.getCartItems().clear();
+        cartRepository.save(cart);
+
+        return response;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getMyOrders() {
+        return orderRepository.findByKeycloakIdOrderByCreatedAtDesc(resolveCurrentKeycloakId()).stream()
+                .map(this::toOrderResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderResponse getMyOrderById(Long orderId) {
+        return orderRepository.findByIdAndKeycloakId(orderId, resolveCurrentKeycloakId())
+                .map(this::toOrderResponse)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy Order với ID: " + orderId));
+    }
+
+    // =================================================
+    // Build Order Items
+    // =================================================
+
+    private Set<OrderItem> buildOrderItemsFromRequest(Order order, List<OrderItemRequest> itemRequests) {
+        Set<OrderItem> items = new LinkedHashSet<>();
+
+        for (OrderItemRequest itemRequest : itemRequests) {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setProductId(parseProductId(itemRequest.productId()));
+            orderItem.setProductName(itemRequest.productName().trim());
+            orderItem.setProductImageUrl(trimToNull(itemRequest.productImageUrl()));
+            orderItem.setSelectedOptionsSnapshot(toSelectedOptionsSnapshot(itemRequest.selectedOptions()));
+            orderItem.setUnitPrice(itemRequest.unitPrice());
+            orderItem.setQuantity(itemRequest.quantity());
+            orderItem.setSubTotal(itemRequest.unitPrice().multiply(BigDecimal.valueOf(itemRequest.quantity())));
+            items.add(orderItem);
+        }
+
+        return items;
+    }
+
+    private Set<OrderItem> buildOrderItemsFromCart(Order order, List<CartItem> cartItems) {
+        Set<OrderItem> items = new LinkedHashSet<>();
+
+        for (CartItem cartItem : cartItems) {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setProductId(cartItem.getProductId());
+            orderItem.setProductName(cartItem.getProductName());
+            orderItem.setProductImageUrl(cartItem.getProductImageUrl());
+            orderItem.setSelectedOptionsSnapshot(cartItem.getSelectedOptionsSnapshot());
+            orderItem.setUnitPrice(cartItem.getUnitPrice());
+            orderItem.setQuantity(cartItem.getQuantity());
+            orderItem.setSubTotal(cartItem.getSubTotal());
+            items.add(orderItem);
+        }
+
+        return items;
+    }
+
+    // =================================================
+    // Persist Order
+    // =================================================
+
+    private OrderResponse persistOrder(
+            String currentKeycloakId,
+            Store assignedStore,
+            String receiverName,
+            String phone,
+            String province,
+            String ward,
+            String detail,
+            tea4life.order_service.model.constant.PaymentMethod paymentMethod,
+            Set<OrderItem> orderItems
+    ) {
+        Order order = new Order();
+        order.setStatus(OrderStatus.PENDING);
+        order.setKeycloakId(currentKeycloakId);
+        order.setStore(assignedStore);
+        order.setReceiverName(receiverName.trim());
+        order.setPhone(phone.trim());
+        order.setProvince(province.trim());
+        order.setWard(ward.trim());
+        order.setDetail(detail.trim());
+        order.setPaymentMethod(paymentMethod);
+        order.setPaymentStatus(PaymentStatus.PENDING);
+
+        orderItems.forEach(item -> item.setOrder(order));
+
+        BigDecimal priceBeforeDiscount = orderItems.stream()
+                .map(OrderItem::getSubTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        order.setPriceBeforeDiscount(priceBeforeDiscount);
+        order.setFinalPrice(priceBeforeDiscount);
+        order.setOrderItems(orderItems);
+
+        Payment payment = new Payment();
+        payment.setKeycloakId(currentKeycloakId);
+        payment.setAmount(priceBeforeDiscount);
+        payment.setStatus(PaymentStatus.PENDING);
+        payment.setOrder(order);
+        order.setPayment(payment);
+
+        Order savedOrder = orderRepository.save(order);
+        savedOrder.setOrderCode(buildOrderCode(savedOrder.getId()));
+
+        return toOrderResponse(orderRepository.save(savedOrder));
+    }
+
+    // =================================================
+    // Mapping
+    // =================================================
+
+    private OrderResponse toOrderResponse(Order order) {
+        List<OrderItemResponse> itemResponses = order.getOrderItems() == null
+                ? List.of()
+                : order.getOrderItems().stream()
+                .map(this::toOrderItemResponse)
+                .toList();
+
+        return new OrderResponse(
+                order.getId() == null ? null : order.getId().toString(),
+                order.getOrderCode(),
+                order.getReceiverName(),
+                order.getPhone(),
+                order.getDetail(),
+                order.getStatus(),
+                order.getFinalPrice(),
+                order.getPaymentMethod(),
+                order.getPaymentStatus(),
+                order.getCreatedAt(),
+                itemResponses
+        );
+    }
+
+    private OrderItemResponse toOrderItemResponse(OrderItem orderItem) {
+        return new OrderItemResponse(
+                orderItem.getProductId() == null ? null : orderItem.getProductId().toString(),
+                orderItem.getProductName(),
+                orderItem.getProductImageUrl(),
+                fromSelectedOptionsSnapshot(orderItem.getSelectedOptionsSnapshot()),
+                orderItem.getUnitPrice(),
+                orderItem.getQuantity()
+        );
+    }
+
+    // =================================================
+    // Snapshot
+    // =================================================
+
+    private List<OrderItemOptionResponse> fromSelectedOptionsSnapshot(String snapshot) {
+        if (snapshot == null || snapshot.isBlank()) {
+            return List.of();
+        }
+
+        try {
+            return objectMapper.readValue(snapshot, new TypeReference<List<OrderItemOptionResponse>>() {
+            });
+        } catch (JsonProcessingException ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Không đọc được selectedOptions snapshot", ex);
+        }
+    }
+
+    private String toSelectedOptionsSnapshot(List<OrderItemOptionRequest> selectedOptions) {
+        if (selectedOptions == null || selectedOptions.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return objectMapper.writeValueAsString(selectedOptions);
+        } catch (JsonProcessingException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "selectedOptions không hợp lệ", ex);
+        }
+    }
+
+    // =================================================
+    // Lookup / Validation
+    // =================================================
+
+    private String resolveCurrentKeycloakId() {
+        UserContext context = UserContext.get();
+        if (context == null || context.getKeycloakId() == null || context.getKeycloakId().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không xác định được người dùng hiện tại");
+        }
+        return context.getKeycloakId().trim();
+    }
+
+    private Store resolveDefaultStore() {
+        return storeRepository.findAll().stream()
+                .filter(store -> Boolean.TRUE.equals(store.getActive()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Chưa có cửa hàng hoạt động để nhận đơn"));
+    }
+
+    // =================================================
+    // Utils
+    // =================================================
+
+    private Long parseProductId(String productId) {
+        try {
+            return Long.parseLong(productId.trim());
+        } catch (NumberFormatException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "productId không hợp lệ", ex);
+        }
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String buildOrderCode(Long orderId) {
+        return "ORD-" + orderId;
+    }
+}

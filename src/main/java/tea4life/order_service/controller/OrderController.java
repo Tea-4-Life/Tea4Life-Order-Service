@@ -1,27 +1,45 @@
 package tea4life.order_service.controller;
 
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import tea4life.order_service.dto.base.ApiResponse;
+import tea4life.order_service.dto.request.order.CheckoutOrderRequest;
+import tea4life.order_service.dto.request.order.CreateOrderRequest;
+import tea4life.order_service.dto.response.order.OrderResponse;
+import tea4life.order_service.service.OrderService;
 
-/**
- * @author Le Tran Gia Huy
- * @created 09/03/2026 - 9:41 PM
- * @project Tea4Life-Product-Service
- * @package tea4life.order_service.controller.admin
- */
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@RequestMapping("/public/orders")
+@RequestMapping("/orders")
 public class OrderController {
-    @GetMapping("/test")
-    public ApiResponse<String> test() {
-        return new ApiResponse<>("Hello World");
+
+    OrderService orderService;
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<OrderResponse>> createOrder(@RequestBody @Valid CreateOrderRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(orderService.createOrder(request)));
+    }
+
+    @PostMapping("/checkout")
+    public ResponseEntity<ApiResponse<OrderResponse>> checkoutMyCart(@RequestBody @Valid CheckoutOrderRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(orderService.checkoutMyCart(request)));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<List<OrderResponse>>> getMyOrders() {
+        return ResponseEntity.ok(new ApiResponse<>(orderService.getMyOrders()));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<OrderResponse>> getMyOrderById(@PathVariable Long id) {
+        return ResponseEntity.ok(new ApiResponse<>(orderService.getMyOrderById(id)));
     }
 }

@@ -25,6 +25,7 @@ import java.util.List;
 @Transactional
 public class StoreOrderServiceImpl implements StoreOrderService {
 
+    // Repository
     OrderRepository orderRepository;
     StoreEmployeeRepository storeEmployeeRepository;
 
@@ -57,6 +58,10 @@ public class StoreOrderServiceImpl implements StoreOrderService {
         return toStoreOrderResponse(orderRepository.save(order));
     }
 
+    // =================================================
+    // Lookup
+    // =================================================
+
     private Order findOrderInCurrentStore(Long orderId) {
         Long storeId = resolveCurrentStoreId();
         return orderRepository.findByIdAndStoreId(orderId, storeId)
@@ -80,6 +85,10 @@ public class StoreOrderServiceImpl implements StoreOrderService {
         return storeEmployees.get(0).getStore().getId();
     }
 
+    // =================================================
+    // Validation
+    // =================================================
+
     private String resolveCurrentKeycloakId() {
         tea4life.order_service.context.UserContext context = tea4life.order_service.context.UserContext.get();
         if (context == null || context.getKeycloakId() == null || context.getKeycloakId().isBlank()) {
@@ -93,6 +102,10 @@ public class StoreOrderServiceImpl implements StoreOrderService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, message);
         }
     }
+
+    // =================================================
+    // Mapping
+    // =================================================
 
     private StoreOrderResponse toStoreOrderResponse(Order order) {
         List<StoreOrderItemResponse> items = order.getOrderItems() == null

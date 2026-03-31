@@ -33,6 +33,13 @@ public class OrderItem extends BaseEntity {
 
     @Column(name = "product_id", nullable = false)
     Long productId;
+    @Column(name = "product_name", nullable = false)
+    String productName;
+    @Column(name = "product_image_url")
+    String productImageUrl;
+    @Lob
+    @Column(name = "selected_options_snapshot", columnDefinition = "LONGTEXT")
+    String selectedOptionsSnapshot;
     Integer quantity;
     @Column(name = "unit_price", nullable = false)
     BigDecimal unitPrice;

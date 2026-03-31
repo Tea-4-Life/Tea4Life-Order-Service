@@ -27,6 +27,7 @@ import java.util.List;
 @Transactional
 public class StoreServiceImpl implements StoreService {
 
+    // Repository
     StoreRepository storeRepository;
     StoreEmployeeRepository storeEmployeeRepository;
 
@@ -119,10 +120,18 @@ public class StoreServiceImpl implements StoreService {
         return toStoreResponse(storeEmployees.get(0).getStore());
     }
 
+    // =================================================
+    // Lookup
+    // =================================================
+
     private Store findStoreEntityById(Long id) {
         return storeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy Store với ID: " + id));
     }
+
+    // =================================================
+    // Mapping
+    // =================================================
 
     private void applyRequestToStore(Store store, UpsertStoreRequest request) {
         store.setName(request.name().trim());
@@ -152,6 +161,10 @@ public class StoreServiceImpl implements StoreService {
                 storeEmployee.getKeycloakId()
         );
     }
+
+    // =================================================
+    // Validation
+    // =================================================
 
     private String resolveCurrentKeycloakId() {
         UserContext context = UserContext.get();
