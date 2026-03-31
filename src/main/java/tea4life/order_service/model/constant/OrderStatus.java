@@ -8,8 +8,9 @@ package tea4life.order_service.model.constant;
  */
 public enum OrderStatus {
     PENDING,
-    CONFIRMED,
-    SHIPPED,
+    PREPARING,
+    READY_FOR_DELIVERY,
+    DELIVERING,
     COMPLETED,
-    REFUNDED
+    CANCELLED
 }

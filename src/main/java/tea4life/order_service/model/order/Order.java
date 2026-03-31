@@ -10,6 +10,7 @@ import tea4life.order_service.model.voucher.VoucherOrder;
 import tea4life.order_service.model.base.BaseEntity;
 import tea4life.order_service.model.constant.OrderStatus;
 import tea4life.order_service.model.payment.Payment;
+import tea4life.order_service.model.store.Store;
 
 import java.math.BigDecimal;
 import java.util.Set;
@@ -39,6 +40,9 @@ public class Order extends BaseEntity {
     OrderStatus status;
     @Column(nullable = false, name = "user_id")
     String keycloakId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id")
+    Store store;
     String note;
     @Column(nullable = false, name = "price_before_discount")
     BigDecimal priceBeforeDiscount;
