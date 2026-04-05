@@ -17,17 +17,16 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@RequestMapping("/stores")
 public class StoreController {
 
     StoreService storeService;
 
-    @GetMapping("/public")
+    @GetMapping("/public/stores")
     public ResponseEntity<ApiResponse<List<StoreResponse>>> findAllStores() {
         return ResponseEntity.ok(new ApiResponse<>(storeService.findAllStores()));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/stores/{id}")
     public ResponseEntity<ApiResponse<StoreResponse>> findStoreById(@PathVariable Long id) {
         return ResponseEntity.ok(new ApiResponse<>(storeService.findStoreById(id)));
     }
