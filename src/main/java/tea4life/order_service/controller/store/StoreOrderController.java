@@ -1,4 +1,4 @@
-package tea4life.order_service.controller;
+package tea4life.order_service.controller.store;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

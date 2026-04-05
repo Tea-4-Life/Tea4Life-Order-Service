@@ -34,7 +34,8 @@ public class StoreServiceImpl implements StoreService {
     @Override
     @Transactional(readOnly = true)
     public List<StoreResponse> findAllStores() {
-        return storeRepository.findAll().stream()
+        return storeRepository.findAll()
+                .stream()
                 .map(this::toStoreResponse)
                 .toList();
     }

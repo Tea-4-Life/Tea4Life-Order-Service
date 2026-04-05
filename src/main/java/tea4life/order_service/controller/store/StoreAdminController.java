@@ -1,4 +1,4 @@
-package tea4life.order_service.controller.admin;
+package tea4life.order_service.controller.store;
 
 import jakarta.validation.Valid;
 import lombok.AccessLevel;

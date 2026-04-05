@@ -1,4 +1,4 @@
-package tea4life.order_service.controller.admin;
+package tea4life.order_service.controller.voucher;
 
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -54,11 +54,11 @@ public class VoucherAdminController {
         } catch (DataIntegrityViolationException e) {
             // Lỗi do database (VD: vi phạm unique, thiếu trường bắt buộc...)
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ApiResponse<>("Lỗi dữ liệu: Vi phạm ràng buộc hoặc dữ liệu đã tồn tại.",null));
+                    .body(new ApiResponse<>("Lỗi dữ liệu: Vi phạm ràng buộc hoặc dữ liệu đã tồn tại.", null));
         } catch (Exception e) {
             // Lỗi hệ thống khác (VD: mất kết nối DB, lỗi runtime...)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("Lỗi server: Không thể thêm mới Voucher lúc này.",null));
+                    .body(new ApiResponse<>("Lỗi server: Không thể thêm mới Voucher lúc này.", null));
         }
     }
 
@@ -74,11 +74,10 @@ public class VoucherAdminController {
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new ApiResponse<>("Lỗi dữ liệu: Vi phạm ràng buộc hoặc dữ liệu đã tồn tại.", null));
-        } catch(ResponseStatusException e) {
+        } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .body(new ApiResponse<>(e.getReason(), null));
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>("Lỗi server: Không thể cập nhật Voucher lúc này.", null));
         }
@@ -99,9 +98,9 @@ public class VoucherAdminController {
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .body(new ApiResponse<>(e.getReason(), null));
-        }catch (Exception e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("Lỗi server: Không thể xóa Voucher lúc này.",null));
+                    .body(new ApiResponse<>("Lỗi server: Không thể xóa Voucher lúc này.", null));
         }
     }
 }
