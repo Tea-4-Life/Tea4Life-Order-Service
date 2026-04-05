@@ -22,7 +22,7 @@ public class StoreController {
 
     StoreService storeService;
 
-    @GetMapping
+    @GetMapping("/public")
     public ResponseEntity<ApiResponse<List<StoreResponse>>> findAllStores() {
         return ResponseEntity.ok(new ApiResponse<>(storeService.findAllStores()));
     }
