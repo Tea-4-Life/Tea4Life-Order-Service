@@ -19,6 +19,10 @@ public class StoreController {
 
     StoreService storeService;
 
+    // ====================================
+    // USER STORE
+    // ====================================
+
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<StoreResponse>> getMyStore() {
         return ResponseEntity.ok(new ApiResponse<>(storeService.findMyStore()));

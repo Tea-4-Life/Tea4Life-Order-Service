@@ -32,6 +32,10 @@ public class StoreAdminController {
 
     StoreService storeService;
 
+    // ====================================
+    // STORE ADMIN CRUD
+    // ====================================
+
     @GetMapping
     public ResponseEntity<ApiResponse<List<StoreResponse>>> findAllStores() {
         return ResponseEntity.ok(new ApiResponse<>(storeService.findAllStores()));
@@ -62,6 +66,10 @@ public class StoreAdminController {
         storeService.deleteStore(id);
         return ResponseEntity.ok(new ApiResponse<>((Void) null));
     }
+
+    // ====================================
+    // STORE EMPLOYEE MANAGEMENT
+    // ====================================
 
     @GetMapping("/{id}/employees")
     public ResponseEntity<ApiResponse<List<StoreEmployeeResponse>>> findStoreEmployees(@PathVariable Long id) {

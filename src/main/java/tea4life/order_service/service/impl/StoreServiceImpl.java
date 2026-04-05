@@ -31,6 +31,10 @@ public class StoreServiceImpl implements StoreService {
     StoreRepository storeRepository;
     StoreEmployeeRepository storeEmployeeRepository;
 
+    // ====================================
+    // STORE ADMIN CRUD
+    // ====================================
+
     @Override
     @Transactional(readOnly = true)
     public List<StoreResponse> findAllStores() {
@@ -65,6 +69,10 @@ public class StoreServiceImpl implements StoreService {
         Store store = findStoreEntityById(id);
         storeRepository.delete(store);
     }
+
+    // ====================================
+    // STORE ADMIN EMPLOYEE MANAGEMENT
+    // ====================================
 
     @Override
     @Transactional(readOnly = true)
@@ -104,6 +112,10 @@ public class StoreServiceImpl implements StoreService {
                 ));
         storeEmployeeRepository.delete(storeEmployee);
     }
+
+    // ====================================
+    // USER STORE
+    // ====================================
 
     @Override
     @Transactional(readOnly = true)
