@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-public record OrderResponse(
+public record DeliveryOrderResponse(
         String id,
         String orderCode,
         String receiverName,
@@ -18,13 +18,13 @@ public record OrderResponse(
         String detail,
         String storeId,
         String storeName,
+        String storeAddress,
+        String driverKeycloakId,
         OrderStatus status,
-        BigDecimal priceBeforeDiscount,
-        BigDecimal totalAmount,
         PaymentMethod paymentMethod,
         PaymentStatus paymentStatus,
-        String note,
+        BigDecimal totalAmount,
         Instant createdAt,
-        List<OrderItemResponse> items
+        List<DeliveryOrderItemResponse> items
 ) {
 }

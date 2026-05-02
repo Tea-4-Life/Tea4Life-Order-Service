@@ -11,6 +11,7 @@ import tea4life.order_service.dto.base.ApiResponse;
 import tea4life.order_service.dto.request.order.CheckoutOrderRequest;
 import tea4life.order_service.dto.request.order.CreateOrderRequest;
 import tea4life.order_service.dto.response.order.OrderResponse;
+import tea4life.order_service.model.constant.OrderStatus;
 import tea4life.order_service.service.OrderService;
 
 import java.util.List;
@@ -34,12 +35,19 @@ public class OrderController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<List<OrderResponse>>> getMyOrders() {
-        return ResponseEntity.ok(new ApiResponse<>(orderService.getMyOrders()));
+    public ResponseEntity<ApiResponse<List<OrderResponse>>> getMyOrders(
+            @RequestParam(value = "status", required = false) OrderStatus status
+    ) {
+        return ResponseEntity.ok(new ApiResponse<>(orderService.getMyOrders(status)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<OrderResponse>> getMyOrderById(@PathVariable Long id) {
         return ResponseEntity.ok(new ApiResponse<>(orderService.getMyOrderById(id)));
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<OrderResponse>> cancelMyOrder(@PathVariable Long id) {
+        return ResponseEntity.ok(new ApiResponse<>(orderService.cancelMyOrder(id)));
     }
 }

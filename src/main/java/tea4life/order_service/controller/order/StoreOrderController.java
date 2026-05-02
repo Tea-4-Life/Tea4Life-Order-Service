@@ -20,25 +20,31 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@RequestMapping("/stores/me/orders")
+@RequestMapping("/stores/{storeId}/orders")
 public class StoreOrderController {
 
     StoreOrderService storeOrderService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<StoreOrderResponse>>> findMyStoreOrders(
+            @PathVariable Long storeId,
             @RequestParam(value = "status", required = false) OrderStatus status
     ) {
-        return ResponseEntity.ok(new ApiResponse<>(storeOrderService.findMyStoreOrders(status)));
+        return ResponseEntity.ok(new ApiResponse<>(storeOrderService.findStoreOrders(storeId, status)));
     }
 
     @PostMapping("/{orderId}/accept")
-    public ResponseEntity<ApiResponse<StoreOrderResponse>> acceptOrder(@PathVariable Long orderId) {
-        return ResponseEntity.ok(new ApiResponse<>(storeOrderService.acceptOrder(orderId)));
+    public ResponseEntity<ApiResponse<StoreOrderResponse>> acceptOrder(@PathVariable Long storeId, @PathVariable Long orderId) {
+        return ResponseEntity.ok(new ApiResponse<>(storeOrderService.acceptOrder(storeId, orderId)));
     }
 
     @PostMapping("/{orderId}/ready-for-delivery")
-    public ResponseEntity<ApiResponse<StoreOrderResponse>> markOrderReadyForDelivery(@PathVariable Long orderId) {
-        return ResponseEntity.ok(new ApiResponse<>(storeOrderService.markOrderReadyForDelivery(orderId)));
+    public ResponseEntity<ApiResponse<StoreOrderResponse>> markOrderReadyForDelivery(@PathVariable Long storeId, @PathVariable Long orderId) {
+        return ResponseEntity.ok(new ApiResponse<>(storeOrderService.markOrderReadyForDelivery(storeId, orderId)));
+    }
+
+    @PostMapping("/{orderId}/cancel")
+    public ResponseEntity<ApiResponse<StoreOrderResponse>> cancelOrder(@PathVariable Long storeId, @PathVariable Long orderId) {
+        return ResponseEntity.ok(new ApiResponse<>(storeOrderService.cancelOrder(storeId, orderId)));
     }
 }

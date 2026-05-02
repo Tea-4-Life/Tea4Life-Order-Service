@@ -10,8 +10,11 @@ import org.springframework.web.server.ResponseStatusException;
 import tea4life.order_service.dto.response.order.StoreOrderItemResponse;
 import tea4life.order_service.dto.response.order.StoreOrderResponse;
 import tea4life.order_service.model.constant.OrderStatus;
+import tea4life.order_service.model.constant.PaymentMethod;
+import tea4life.order_service.model.constant.PaymentStatus;
 import tea4life.order_service.model.order.Order;
 import tea4life.order_service.model.order.OrderItem;
+import tea4life.order_service.model.payment.Payment;
 import tea4life.order_service.model.store.StoreEmployee;
 import tea4life.order_service.repository.OrderRepository;
 import tea4life.order_service.repository.StoreEmployeeRepository;
@@ -31,8 +34,8 @@ public class StoreOrderServiceImpl implements StoreOrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<StoreOrderResponse> findMyStoreOrders(OrderStatus status) {
-        Long storeId = resolveCurrentStoreId();
+    public List<StoreOrderResponse> findStoreOrders(Long storeId, OrderStatus status) {
+        ensureCurrentUserBelongsToStore(storeId);
         List<Order> orders = (status == null)
                 ? orderRepository.findByStoreIdOrderByCreatedAtDesc(storeId)
                 : orderRepository.findByStoreIdAndStatusOrderByCreatedAtDesc(storeId, status);
@@ -43,18 +46,38 @@ public class StoreOrderServiceImpl implements StoreOrderService {
     }
 
     @Override
-    public StoreOrderResponse acceptOrder(Long orderId) {
-        Order order = findOrderInCurrentStore(orderId);
+    public StoreOrderResponse acceptOrder(Long storeId, Long orderId) {
+        Order order = findOrderInStore(storeId, orderId);
         ensureStatus(order, OrderStatus.PENDING, "Chỉ có thể nhận đơn đang ở trạng thái PENDING");
         order.setStatus(OrderStatus.PREPARING);
         return toStoreOrderResponse(orderRepository.save(order));
     }
 
     @Override
-    public StoreOrderResponse markOrderReadyForDelivery(Long orderId) {
-        Order order = findOrderInCurrentStore(orderId);
+    public StoreOrderResponse markOrderReadyForDelivery(Long storeId, Long orderId) {
+        Order order = findOrderInStore(storeId, orderId);
         ensureStatus(order, OrderStatus.PREPARING, "Chỉ có thể xác nhận xong đơn đang ở trạng thái PREPARING");
         order.setStatus(OrderStatus.READY_FOR_DELIVERY);
+        return toStoreOrderResponse(orderRepository.save(order));
+    }
+
+    @Override
+    public StoreOrderResponse cancelOrder(Long storeId, Long orderId) {
+        Order order = findOrderInStore(storeId, orderId);
+        if (order.getStatus() == OrderStatus.DELIVERING || order.getStatus() == OrderStatus.COMPLETED || order.getStatus() == OrderStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Không thể hủy đơn ở trạng thái hiện tại");
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+
+        if (order.getPaymentMethod() == PaymentMethod.BANKING) {
+            order.setPaymentStatus(PaymentStatus.CANCELED);
+            Payment payment = order.getPayment();
+            if (payment != null) {
+                payment.setStatus(PaymentStatus.CANCELED);
+            }
+        }
+
         return toStoreOrderResponse(orderRepository.save(order));
     }
 
@@ -62,8 +85,8 @@ public class StoreOrderServiceImpl implements StoreOrderService {
     // Lookup
     // =================================================
 
-    private Order findOrderInCurrentStore(Long orderId) {
-        Long storeId = resolveCurrentStoreId();
+    private Order findOrderInStore(Long storeId, Long orderId) {
+        ensureCurrentUserBelongsToStore(storeId);
         return orderRepository.findByIdAndStoreId(orderId, storeId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -71,18 +94,11 @@ public class StoreOrderServiceImpl implements StoreOrderService {
                 ));
     }
 
-    private Long resolveCurrentStoreId() {
+    private void ensureCurrentUserBelongsToStore(Long storeId) {
         String keycloakId = resolveCurrentKeycloakId();
-        List<StoreEmployee> storeEmployees = storeEmployeeRepository.findByKeycloakIdOrderByCreatedAtAsc(keycloakId);
-
-        if (storeEmployees.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Bạn chưa được gán vào chi nhánh nào");
+        if (storeEmployeeRepository.findByStoreIdAndKeycloakId(storeId, keycloakId).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thuộc chi nhánh này");
         }
-        if (storeEmployees.size() > 1) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Bạn đang được gán nhiều chi nhánh");
-        }
-
-        return storeEmployees.get(0).getStore().getId();
     }
 
     // =================================================
@@ -116,12 +132,20 @@ public class StoreOrderServiceImpl implements StoreOrderService {
 
         return new StoreOrderResponse(
                 order.getId() == null ? null : order.getId().toString(),
+                order.getOrderCode(),
                 order.getStore() == null || order.getStore().getId() == null ? null : order.getStore().getId().toString(),
+                order.getReceiverName(),
+                order.getPhone(),
+                order.getProvince(),
+                order.getWard(),
+                order.getDetail(),
                 order.getKeycloakId(),
                 order.getStatus(),
                 order.getNote(),
                 order.getPriceBeforeDiscount(),
                 order.getFinalPrice(),
+                order.getPaymentMethod(),
+                order.getPaymentStatus(),
                 order.getCreatedAt(),
                 items
         );

@@ -21,6 +21,7 @@ import tea4life.order_service.dto.response.order.OrderResponse;
 import tea4life.order_service.model.cart.Cart;
 import tea4life.order_service.model.cart.CartItem;
 import tea4life.order_service.model.constant.OrderStatus;
+import tea4life.order_service.model.constant.PaymentMethod;
 import tea4life.order_service.model.constant.PaymentStatus;
 import tea4life.order_service.model.order.Order;
 import tea4life.order_service.model.order.OrderItem;
@@ -99,8 +100,13 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrderResponse> getMyOrders() {
-        return orderRepository.findByKeycloakIdOrderByCreatedAtDesc(resolveCurrentKeycloakId()).stream()
+    public List<OrderResponse> getMyOrders(OrderStatus status) {
+        String keycloakId = resolveCurrentKeycloakId();
+        List<Order> orders = status == null
+                ? orderRepository.findByKeycloakIdOrderByCreatedAtDesc(keycloakId)
+                : orderRepository.findByKeycloakIdAndStatusOrderByCreatedAtDesc(keycloakId, status);
+
+        return orders.stream()
                 .map(this::toOrderResponse)
                 .toList();
     }
@@ -111,6 +117,24 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.findByIdAndKeycloakId(orderId, resolveCurrentKeycloakId())
                 .map(this::toOrderResponse)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy Order với ID: " + orderId));
+    }
+
+    @Override
+    public OrderResponse cancelMyOrder(Long orderId) {
+        Order order = orderRepository.findByIdAndKeycloakId(orderId, resolveCurrentKeycloakId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy Order với ID: " + orderId));
+
+        ensureStatus(order, OrderStatus.PENDING, "Chỉ có thể hủy đơn ở trạng thái PENDING");
+        order.setStatus(OrderStatus.CANCELLED);
+
+        if (order.getPaymentMethod() == PaymentMethod.BANKING) {
+            order.setPaymentStatus(PaymentStatus.CANCELED);
+            if (order.getPayment() != null) {
+                order.getPayment().setStatus(PaymentStatus.CANCELED);
+            }
+        }
+
+        return toOrderResponse(orderRepository.save(order));
     }
 
     // =================================================
@@ -221,11 +245,17 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderCode(),
                 order.getReceiverName(),
                 order.getPhone(),
+                order.getProvince(),
+                order.getWard(),
                 order.getDetail(),
+                order.getStore() == null || order.getStore().getId() == null ? null : order.getStore().getId().toString(),
+                order.getStore() == null ? null : order.getStore().getName(),
                 order.getStatus(),
+                order.getPriceBeforeDiscount(),
                 order.getFinalPrice(),
                 order.getPaymentMethod(),
                 order.getPaymentStatus(),
+                order.getNote(),
                 order.getCreatedAt(),
                 itemResponses
         );
@@ -288,6 +318,12 @@ public class OrderServiceImpl implements OrderService {
                 .filter(store -> Boolean.TRUE.equals(store.getActive()))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Chưa có cửa hàng hoạt động để nhận đơn"));
+    }
+
+    private void ensureStatus(Order order, OrderStatus expectedStatus, String message) {
+        if (order.getStatus() != expectedStatus) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, message);
+        }
     }
 
     private Store resolveAssignedStore(Double latitude, Double longitude) {

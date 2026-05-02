@@ -17,5 +17,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByKeycloakIdOrderByCreatedAtDesc(String keycloakId);
 
+    List<Order> findByKeycloakIdAndStatusOrderByCreatedAtDesc(String keycloakId, OrderStatus status);
+
     Optional<Order> findByIdAndKeycloakId(Long id, String keycloakId);
+
+    List<Order> findByStatusOrderByCreatedAtDesc(OrderStatus status);
+
+    List<Order> findByStatusAndDriverKeycloakIdIsNullOrderByCreatedAtDesc(OrderStatus status);
+
+    List<Order> findByStatusAndDriverKeycloakIdOrderByCreatedAtDesc(OrderStatus status, String driverKeycloakId);
+
+    Optional<Order> findByIdAndDriverKeycloakId(Long id, String driverKeycloakId);
 }

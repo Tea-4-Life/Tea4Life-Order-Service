@@ -30,9 +30,9 @@ public class StoreEmployeeController {
 
     StoreService storeService;
 
-    @GetMapping("/me")
-    public ResponseEntity<ApiResponse<StoreResponse>> getMyStore() {
-        return ResponseEntity.ok(new ApiResponse<>(storeService.findMyStore()));
+    @GetMapping("/my-stores")
+    public ResponseEntity<ApiResponse<List<StoreResponse>>> getMyStores() {
+        return ResponseEntity.ok(new ApiResponse<>(storeService.findMyStores()));
     }
 
     @GetMapping("/{id}/employees")

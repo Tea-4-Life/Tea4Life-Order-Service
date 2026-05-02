@@ -7,9 +7,11 @@ import java.util.List;
 
 public interface StoreOrderService {
 
-    List<StoreOrderResponse> findMyStoreOrders(OrderStatus status);
+    List<StoreOrderResponse> findStoreOrders(Long storeId, OrderStatus status);
 
-    StoreOrderResponse acceptOrder(Long orderId);
+    StoreOrderResponse acceptOrder(Long storeId, Long orderId);
 
-    StoreOrderResponse markOrderReadyForDelivery(Long orderId);
+    StoreOrderResponse markOrderReadyForDelivery(Long storeId, Long orderId);
+
+    StoreOrderResponse cancelOrder(Long storeId, Long orderId);
 }

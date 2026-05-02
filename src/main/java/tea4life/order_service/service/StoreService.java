@@ -25,5 +25,5 @@ public interface StoreService {
 
     void removeEmployee(Long storeId, String keycloakId);
 
-    StoreResponse findMyStore();
+    List<StoreResponse> findMyStores();
 }

@@ -64,6 +64,8 @@ public class Order extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "payment_status")
     PaymentStatus paymentStatus;
+    @Column(name = "driver_keycloak_id")
+    String driverKeycloakId;
     String note;
     @Column(nullable = false, name = "price_before_discount")
     BigDecimal priceBeforeDiscount;

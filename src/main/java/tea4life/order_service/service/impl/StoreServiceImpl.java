@@ -114,23 +114,17 @@ public class StoreServiceImpl implements StoreService {
     }
 
     // ====================================
-    // USER STORE
+    // USER STORES
     // ====================================
 
     @Override
     @Transactional(readOnly = true)
-    public StoreResponse findMyStore() {
+    public List<StoreResponse> findMyStores() {
         String keycloakId = resolveCurrentKeycloakId();
-        List<StoreEmployee> storeEmployees = storeEmployeeRepository.findByKeycloakIdOrderByCreatedAtAsc(keycloakId);
-
-        if (storeEmployees.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Bạn chưa được gán vào chi nhánh nào");
-        }
-        if (storeEmployees.size() > 1) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Bạn đang được gán nhiều chi nhánh");
-        }
-
-        return toStoreResponse(storeEmployees.get(0).getStore());
+        return storeEmployeeRepository.findByKeycloakIdOrderByCreatedAtAsc(keycloakId).stream()
+                .map(StoreEmployee::getStore)
+                .map(this::toStoreResponse)
+                .toList();
     }
 
     // =================================================
